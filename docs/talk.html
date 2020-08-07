@@ -36,33 +36,89 @@ document.getElementsByTagName( 'head' )[0].appendChild( link );</script><!--[if 
 Las nuevas tareas se ejecutan en threads existentes a medida que esos threads quedan inactivos.</p></div>
 <div class="paragraph"><p>Para enviar una tarea a un thread pool, se recomienda usar la interfaz <code>ExecutorService</code>.</p></div>
 <aside class="notes"><div class="paragraph"><p>Crear threads es una tarea es costoso, por lo que debe crear un thread pool solo una vez a medida que se inicializa su aplicación.
-Asegúrese de guardar la instancia del <code>ExecutorService</code> en una clase que herede de <code>Application</code> (funciona como Singleton) o usar un contenedor de inyección de dependencia.</p></div></aside>
+Asegúrese de guardar la instancia del <code>ExecutorService</code> en una clase que herede de <code>Application</code> (funciona como Singleton) o usar un contenedor de inyección de dependencia.</p></div>
+<div class="paragraph"><p>Se recomienda revisar la documentación oficial para explorar diferentes maneras de inicializar el Pool de Threads <a href="https://developer.android.com/guide/background/threading#configuring-a-thread-pool" class="bare">https://developer.android.com/guide/background/threading#configuring-a-thread-pool</a></p></div></aside>
 <pre class="highlight listingblock"><code data-noescape class="kotlin language-kotlin">class MyApplication : Application() {
     val executorService: ExecutorService = Executors.newFixedThreadPool(4)
 }</code></pre></section>
+<section id="_ejecutando_una_tarea_en_segundo_plano"><h2>Ejecutando una tarea en segundo plano</h2><div class="paragraph"><p>Hacer una petición de red en el hilo principal hace que el hilo espere o se bloquee hasta que reciba una respuesta.
+Dado que el hilo está bloqueado, el sistema operativo no puede llamar a <code>onDraw()</code> y su aplicación se congela, lo que puede generar un ANR.
+En Android está prohibido hacer peticiones de red (ej. llamadas a web services) en el hilo principal.</p></div></section>
+<section id="_ejecución_de_una_tarea_en_segundo_plano"><h2>Ejecución de una tarea en segundo plano</h2><pre class="highlight listingblock"><code data-noescape class="kotlin language-kotlin">   fun doInBackground() {
+        executor.execute {
+            for (i in 1..100) {
+                Log.i("TimerTask", "Execution $i")
+                try {
+                    Thread.sleep(100)
+                } catch (e: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                }
+            }
+        }
+    }</code></pre></section>
+<section id="_cómo_detener_un_thread_en_ejecución"><h2>¿Cómo detener un Thread en ejecución ?</h2><div class="paragraph"><p>Podemos usar una bandera para controlarlo.
+Java nos ofrece la clase <code>AtomicBoolean</code> (que podemos invocar desde Kotlin), la cual podemos usar para actualizaciones que necesiten ser atómicas (Thread Safe).</p></div></section>
+<section><pre class="highlight listingblock"><code data-noescape class="kotlin language-kotlin">private val running: AtomicBoolean = AtomicBoolean(false)
+fun doInBackground() {
+    executor.execute {
+        running.set(true)
+        for (i in 1..100) {
+            if (running.get()) {
+                /*Lógica */
+            } else {
+                break
+            }
+        }
+    }
+}
+fun stop() {
+    running.set(false)
+}</code></pre></section>
+<section id="_coroutines"><h2>Coroutines</h2><div class="paragraph"><p>Las coroutines (en español corrutinas) son componentes de programas que generalizan las subrutinas para la multitarea no preventiva, al permitir que se suspenda y se reanude la ejecución.</p></div>
+<div class="paragraph"><p>Podemos imaginarlas que su funcionamiento es es como el del los Threads, pero con algunas diferencias.</p></div></section>
+<section id="_corrutinas_en_kotlin"><h2>Corrutinas en Kotlin</h2><div class="paragraph"><p>Las corrutinas han formado del ecosistema de Kotlin desde la versión 1.1 como una caraterística experimental. Pero Kotlin 1.3 lanzó la API final, y ahora están listas para ser usadas en producción.</p></div></section>
+<section id="_dependencias_para_usar_corrutinas_en_android"><h2>Dependencias para usar Corrutinas en Android</h2><pre class="highlight listingblock"><code data-noescape class="groovy language-groovy">implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8'
+implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.8'`</code></pre></section>
+<section id="_características_de_las_corrutinas"><h2>Características de las corrutinas</h2><div class="ulist"><ul><li><p>Permiten escribir tu código asícrono de forma secuencial, lo que reduce drásticamente la carga cognitiva.</p></li><li><p>Son mucho más eficientes que los Threads.
+Varias corrutinas se pueden ejecutar utilizando el mismo hilo.</p></li><li><p>Las corrutinas se basan en la idea de las funciones de suspensión (<code>suspend</code> functions).</p></li></ul></div></section>
+<section id="_suspend_functions"><h2><code>suspend</code> functions</h2><div class="paragraph"><p>Estas son funciones que pueden detener la ejecución de una corrutina en cualquier punto y luego devolverle el control una vez que el resultado esté listo y la función haya terminado de hacer su trabajo.</p></div>
+<div class="paragraph"><p>Las corrutinas son básicamente un lugar seguro donde las funciones de suspensión (normalmente) no bloquean el hilo principal.</p></div></section>
+<section id="_contexto_de_corrutina"><h2>Contexto de corrutina</h2><div class="paragraph"><p>La corrutinas se ejecutan en un contexto que define las reglas y configuraciones de su ejecución.
+Puede ser:</p></div>
+<div class="ulist"><ul><li><p>Explicito: Configuramos manualmente el dispatcher que se utilizará.</p></li><li><p>Por el scope de la corrutina.</p></li></ul></div></section>
+<section id="_tipos_dispatchers"><h2>Tipos Dispatchers</h2><div class="ulist"><ul><li><p>Default</p></li><li><p>IO</p></li><li><p>Unconfined</p></li><li><p>Main</p></li></ul></div></section>
+<section id="_dispatcher_default"><h2>Dispatcher Default</h2><div class="paragraph"><p>Se usará cuando no se defina un dispatcher, pero también podemos configurarlo explícitamente.
+Este dispatcher se utiliza para ejecutar tareas que hacen un uso intensivo de la CPU, principalmente cálculos de la propia App, algoritmos, etc.</p></div></section>
+<section id="_dispatcher_io"><h2>Dispatcher IO</h2><div class="paragraph"><p>Se utiliza para ejecutar operaciones de entrada/salida.
+En general, todas las tareas que bloquearán el hilo mientras esperan la respuesta de otro sistema: peticiones al servidor, acceso a la base de datos, sitema de archivos, sensores… ya que no usan la CPU, se puede tener muchas en ejecución al mismo tiempo, por lo que el tamaño de este grupo de hilos es de 64.</p></div></section>
+<section id="_dispatcher_unconfined"><h2>Dispatcher Unconfined</h2><div class="paragraph"><p>Si no te importa mucho qué hilo se utiliza, puedes usar este dispatcher.
+Es difícil predecir qué hilo se usará, así que no lo uses a menos que estés muy seguro de lo que estás haciendo.</p></div></section>
+<section id="_distpacher_main"><h2>Distpacher Main</h2><div class="paragraph"><p>Este es un dispatcher especial que se incluye en las librerías de corrutinas relacionadas con interfaz de usuario.
+En particular, en Android, utilizará el hilo de UI.</p></div></section>
+<section id="_invocación_y_declaración"><h2>Invocación y declaración</h2><pre class="highlight listingblock"><code data-noescape class="kotlin language-kotlin">// Invocación
+GlobalScope.launch(Dispatchers.Main) { task.doInBackground() }
+// Declaración
+suspend fun doInBackground() {
+    withContext(Dispatchers.IO) { // Cambia al dispatcher de I/O
+        for (i in 1..100) {
+            if (isActive) { // Chequea por el estado actual
+                Log.i("TimerTask", "Execution $i")
+                // Lógica
+            } else {
+                break
+            }
+        }
+    }
+}</code></pre></section>
+<section id="_cancelando_una_corrutina"><h2>Cancelando una corrutina</h2><div class="paragraph"><p>La invocación de <code>GlobalScope.launch</code> nos retorna un <code>job</code>.
+Que es otra clase que implementa <code>CoroutineContext</code>.</p></div>
+<div class="paragraph"><p>Los jobs proveen las funciones `cancel y `join con los que podemos cancelar las corrutinas o bloquearla hasta que las jobs hijos hayan finalizado.</p></div></section>
+<section><pre class="highlight listingblock"><code data-noescape class="kotlin language-kotlin">job = GlobalScope.launch(Dispatchers.Main) { task.doInBackground() }
+job.cancel() //Detiene la corrutina</code></pre></section>
 <section id="_bloquear_la_ui"><h2>Bloquear la UI</h2><div class="ulist"><ul><li><p>Podríamos bloquear la UI mientras se ejecuta la tarea asíncrona y al mismo tiempo informar al usuario sobre el progreso de la misma</p></li><li><p>Para lograr este objetivo, Android nos provee el control ProgressBar</p></li></ul></div>
 <div class="imageblock" style=""><img src="./images/progressbar.png" alt="progressbar" width="300px"></div></section>
-<section><pre class="highlight listingblock"><code data-noescape class="kotlin language-kotlin">class DbHelper(context: Context, <i class="conum" data-value="1"></i><b>(1)</b>
-               name: String, <i class="conum" data-value="2"></i><b>(2)</b>
-               factory: SQLiteDatabase.CursorFactory?, <i class="conum" data-value="3"></i><b>(3)</b>
-               version: Int) <i class="conum" data-value="4"></i><b>(4)</b>
-    : SQLiteOpenHelper(context, name, factory, version) {
-
-    private val sqlCreate = "create table usuario (id INTEGER, nombre TEXT)"
-
-    override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL(sqlCreate)
-    }
-
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("DROP TABLE IF EXISTS Usuarios")
-        db.execSQL(sqlCreate)
-    }
-}</code></pre>
-<aside class="notes"><div class="ulist"><ul><li><p><code>context</code>: Usado para ubicar el archivo de la base de datos</p></li><li><p><code>name</code>: Nombre de la base de datos</p></li><li><p><code>factory</code>: Usado para creación de cursores</p></li><li><p><code>version</code>: Versión de la base de datos (empezando en 1)</p></li></ul></div>
-<div class="paragraph"><p>Ver referencia en: <a href="https://developer.android.com/reference/android/database/sqlite/SQLiteOpenHelper#SQLiteOpenHelper(android.content.Context,%20java.lang.String,%20android.database.sqlite.SQLiteDatabase.CursorFactory,%20int" class="bare">https://developer.android.com/reference/android/database/sqlite/SQLiteOpenHelper#SQLiteOpenHelper(android.content.Context,%20java.lang.String,%20android.database.sqlite.SQLiteDatabase.CursorFactory,%20int</a>)</p></div></aside></section>
-<section><div class="ulist"><ul><li><p>Fuentes:</p></li></ul></div>
-<div class="paragraph"><p>**</p></div>
+<section id="_conclusiones"><h2>Conclusiones</h2><div class="ulist"><ul><li><p>Cuando desarrollamos en Android existen restricciones en cuánto al uso del hilo principal. Para ser peticiones a servicios remotos u operaciones costosas debemos usar el hilo secundario.</p></li><li><p>Android es compatible con el API de concurrencia de Java.</p></li><li><p>Las corrutinas simplifican la ejecución de tareas en segundo plano.</p></li></ul></div></section>
+<section><div class="ulist"><ul><li><p>Fuentes:</p><div class="ulist"><ul><li><p><a href="https://developer.android.com/guide/background/threading">Running Android tasks in background threads</a></p></li><li><p><a href="https://www.baeldung.com/java-thread-stop">How to Kill a Java Thread</a></p></li><li><p><a href="https://devexperto.com/corrutinas/">Corrutinas en Kotlin 1.3: funciones de suspensión, contexts, builders y scopes</a></p></li></ul></div></li></ul></div>
 <aside class="notes"><div class="paragraph"><p>Para generar pdf incluir al final de la presentación lo siguiente: ?showNotes=separate-page&amp;print-pdf</p></div></aside></section></div></div><script src="reveal.js/lib/js/head.min.js"></script><script src="reveal.js/js/reveal.js"></script><script>Array.prototype.slice.call(document.querySelectorAll('.slides section')).forEach(function(slide) {
   if (slide.getAttribute('data-background-color')) return;
   // user needs to explicitly say he wants CSS color to override otherwise we might break custom css or theme (#226)

@@ -2,7 +2,11 @@
 
 * Fuentes:
 
-**
+** https://developer.android.com/guide/background/threading[Running Android tasks in background threads]
+
+** https://www.baeldung.com/java-thread-stop[How to Kill a Java Thread]
+
+** https://devexperto.com/corrutinas/[Corrutinas en Kotlin 1.3: funciones de suspensión, contexts, builders y scopes]
 
 [NOTE.speaker]
 ====
