@@ -1,0 +1,93 @@
+:icons: font
+:twitter-tag: UDE
+:conference-tag:
+:talk-tag: Background Threading
+:linkattrs:
+ifndef::partials[:partials: partials]
+
+include::{partials}/footer.ad[]
+
+//== !
+//image::pattern-design-4pwbdv1y.jpg[background, size=auto]
+// Fuente: https://standaserigraf.wordpress.com/2015/09/30/pattern-design-tecnica-artistica-que-se-ocupa-de-la-creacion-de-patrones-graficos/
+
+== Tareas de segundo plano en Android
+
+== Tareas en segundo plano
+
+La aplicación principal, sus activities, servicios o llamadas externas se ejecutan en el hilo principal (Main thread), es por esto que cualquier proceso en ejecución bloquearía la interfaz de usuario durante el tiempo que se esté ejecutando.
+
+== ANR
+
+Bloquear durante mucho tiempo la interfaz de usuario genera en el usuario una mala experiencia de uso, una pobre usabilidad, y el riesgo de recibir un "Application Not Responding" (ANR), luego de 5 segundos con el hilo principal bloqueado.
+
+image::anr.png[size=auto]
+
+== Alternativas para ejecutar tareas en segundo plano
+
+* Threads
+* AsyncTask (Deprecated)
+* Looper
+* Coroutines
+
+== Manejando múltiples threads
+
+Un thread pool es una colección administrada de threads que ejecuta tareas en paralelo desde una cola.
+Las nuevas tareas se ejecutan en threads existentes a medida que esos threads quedan inactivos.
+
+Para enviar una tarea a un thread pool, se recomienda usar la interfaz `ExecutorService`.
+
+[NOTE.speaker]
+====
+Crear threads es una tarea es costoso, por lo que debe crear un thread pool solo una vez a medida que se inicializa su aplicación.
+Asegúrese de guardar la instancia del `ExecutorService` en una clase que herede de `Application` (funciona como Singleton) o usar un contenedor de inyección de dependencia.
+====
+
+[source,kotlin]
+----
+class MyApplication : Application() {
+    val executorService: ExecutorService = Executors.newFixedThreadPool(4)
+}
+----
+
+== Bloquear la UI
+
+* Podríamos bloquear la UI mientras se ejecuta la tarea asíncrona y al mismo tiempo informar al usuario sobre el progreso de la misma
+* Para lograr este objetivo, Android nos provee el control ProgressBar
+
+image::progressbar.png[width=300px]
+
+== !
+
+[source,kotlin]
+----
+class DbHelper(context: Context, //<1>
+               name: String, //<2>
+               factory: SQLiteDatabase.CursorFactory?, //<3>
+               version: Int) //<4>
+    : SQLiteOpenHelper(context, name, factory, version) {
+
+    private val sqlCreate = "create table usuario (id INTEGER, nombre TEXT)"
+
+    override fun onCreate(db: SQLiteDatabase) {
+        db.execSQL(sqlCreate)
+    }
+
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        db.execSQL("DROP TABLE IF EXISTS Usuarios")
+        db.execSQL(sqlCreate)
+    }
+}
+----
+
+[NOTE.speaker]
+====
+* `context`: Usado para ubicar el archivo de la base de datos
+* `name`: Nombre de la base de datos
+* `factory`: Usado para creación de cursores
+* `version`: Versión de la base de datos (empezando en 1)
+
+Ver referencia en: https://developer.android.com/reference/android/database/sqlite/SQLiteOpenHelper#SQLiteOpenHelper(android.content.Context,%20java.lang.String,%20android.database.sqlite.SQLiteDatabase.CursorFactory,%20int)
+====
+
+include::{partials}/self.ad[]
