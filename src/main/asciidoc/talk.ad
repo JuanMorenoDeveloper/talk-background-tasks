@@ -117,7 +117,7 @@ Las corrutinas han formado del ecosistema de Kotlin desde la versión 1.1 como u
 [source,groovy]
 ----
 implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8'
-implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.8'`
+implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.8'
 ----
 
 == Características de las corrutinas
@@ -196,7 +196,7 @@ suspend fun doInBackground() {
 La invocación de `GlobalScope.launch` nos retorna un `job`.
 Que es otra clase que implementa `CoroutineContext`.
 
-Los jobs proveen las funciones `cancel y `join con los que podemos cancelar las corrutinas o bloquearla hasta que las jobs hijos hayan finalizado.
+Los jobs proveen las funciones `cancel` y `join` con los que podemos cancelar las corrutinas o bloquearla hasta que las jobs hijos hayan finalizado.
 
 == !
 

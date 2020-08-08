@@ -78,7 +78,7 @@ fun stop() {
 <div class="paragraph"><p>Podemos imaginarlas que su funcionamiento es es como el del los Threads, pero con algunas diferencias.</p></div></section>
 <section id="_corrutinas_en_kotlin"><h2>Corrutinas en Kotlin</h2><div class="paragraph"><p>Las corrutinas han formado del ecosistema de Kotlin desde la versión 1.1 como una caraterística experimental. Pero Kotlin 1.3 lanzó la API final, y ahora están listas para ser usadas en producción.</p></div></section>
 <section id="_dependencias_para_usar_corrutinas_en_android"><h2>Dependencias para usar Corrutinas en Android</h2><pre class="highlight listingblock"><code data-noescape class="groovy language-groovy">implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8'
-implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.8'`</code></pre></section>
+implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.8'</code></pre></section>
 <section id="_características_de_las_corrutinas"><h2>Características de las corrutinas</h2><div class="ulist"><ul><li><p>Permiten escribir tu código asícrono de forma secuencial, lo que reduce drásticamente la carga cognitiva.</p></li><li><p>Son mucho más eficientes que los Threads.
 Varias corrutinas se pueden ejecutar utilizando el mismo hilo.</p></li><li><p>Las corrutinas se basan en la idea de las funciones de suspensión (<code>suspend</code> functions).</p></li></ul></div></section>
 <section id="_suspend_functions"><h2><code>suspend</code> functions</h2><div class="paragraph"><p>Estas son funciones que pueden detener la ejecución de una corrutina en cualquier punto y luego devolverle el control una vez que el resultado esté listo y la función haya terminado de hacer su trabajo.</p></div>
@@ -112,7 +112,7 @@ suspend fun doInBackground() {
 }</code></pre></section>
 <section id="_cancelando_una_corrutina"><h2>Cancelando una corrutina</h2><div class="paragraph"><p>La invocación de <code>GlobalScope.launch</code> nos retorna un <code>job</code>.
 Que es otra clase que implementa <code>CoroutineContext</code>.</p></div>
-<div class="paragraph"><p>Los jobs proveen las funciones `cancel y `join con los que podemos cancelar las corrutinas o bloquearla hasta que las jobs hijos hayan finalizado.</p></div></section>
+<div class="paragraph"><p>Los jobs proveen las funciones <code>cancel</code> y <code>join</code> con los que podemos cancelar las corrutinas o bloquearla hasta que las jobs hijos hayan finalizado.</p></div></section>
 <section><pre class="highlight listingblock"><code data-noescape class="kotlin language-kotlin">job = GlobalScope.launch(Dispatchers.Main) { task.doInBackground() }
 job.cancel() //Detiene la corrutina</code></pre></section>
 <section id="_bloquear_la_ui"><h2>Bloquear la UI</h2><div class="ulist"><ul><li><p>Podríamos bloquear la UI mientras se ejecuta la tarea asíncrona y al mismo tiempo informar al usuario sobre el progreso de la misma</p></li><li><p>Para lograr este objetivo, Android nos provee el control ProgressBar</p></li></ul></div>
